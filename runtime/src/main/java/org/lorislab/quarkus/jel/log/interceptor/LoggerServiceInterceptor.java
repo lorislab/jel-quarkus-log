@@ -108,19 +108,9 @@ public class LoggerServiceInterceptor {
     private void handleException(InterceptorContext context, Logger logger, LoggerService ano, Throwable ex) {
         context.closeContext(getValue(ex));
         logger.error("{}", Configuration.msgFailed(context));
-
         boolean stacktrace = ano.stacktrace();
         if (stacktrace) {
-            if (ex instanceof LogException) {
-                LogException sec = (LogException) ex;
-                if (sec.isStackTraceLog()) {
-                    logger.error("{}", Configuration.msgServiceException((Exception) ex));
-                    sec.setStackTraceLog(false);
-                }
-            } else {
-                logger.error("{}", Configuration.msgException(context), ex);
-            }
-
+            logger.error("Stacktrace ", ex);
         }
     }
 
