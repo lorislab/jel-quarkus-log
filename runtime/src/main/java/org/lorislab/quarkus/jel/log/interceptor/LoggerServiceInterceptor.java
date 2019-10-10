@@ -15,7 +15,6 @@
  */
 package org.lorislab.quarkus.jel.log.interceptor;
 
-import io.smallrye.config.ConfigFactory;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.slf4j.Logger;
@@ -47,6 +46,9 @@ public class LoggerServiceInterceptor {
     @Inject
     LoggerBuilderService loggerBuilderService;
 
+    @Inject
+    LoggerConfiguration config;
+
     @AroundInvoke
     public Object methodExecution(final InvocationContext ic) throws Exception {
         Object result;
@@ -61,36 +63,36 @@ public class LoggerServiceInterceptor {
             String parameters = getValuesString(ic.getParameters(), method.getParameters());
 
             InterceptorContext context = new InterceptorContext(method.getName(), parameters, className);
-            logger.info("{}", Configuration.msgStart(context));
+            logger.info("{}", config.msgStart(context));
 
             try {
                 result = ic.proceed();
 
                 if (result instanceof CompletionStage) {
-                    logger.info("{}", Configuration.msgFutureStart(context));
+                    logger.info("{}", config.msgFutureStart(context));
 
                     CompletionStage cs = (CompletionStage) result;
                     cs.toCompletableFuture().whenComplete((u, eex) -> {
                         if (eex != null) {
                             handleException(context, logger, ano, (Throwable) eex);
                         } else {
-                            String contextResult = Configuration.PATTERN_RESULT_VOID;
+                            String contextResult = config.resultVoid;
                             if (u != Void.TYPE) {
                                 contextResult = getValue(u);
                             }
                             context.closeContext(contextResult);
                             // log the success message
-                            logger.info("{}", Configuration.msgSucceed(context));
+                            logger.info("{}", config.msgSucceed(context));
                         }
                     });
                 } else {
-                    String contextResult = Configuration.PATTERN_RESULT_VOID;
+                    String contextResult = config.resultVoid;
                     if (method.getReturnType() != Void.TYPE) {
                         contextResult = getValue(result);
                     }
                     context.closeContext(contextResult);
                     // log the success message
-                    logger.info("{}", Configuration.msgSucceed(context));
+                    logger.info("{}", config.msgSucceed(context));
                 }
             } catch (InvocationTargetException ie) {
                 handleException(context, logger, ano, ie.getCause());
@@ -107,7 +109,7 @@ public class LoggerServiceInterceptor {
 
     private void handleException(InterceptorContext context, Logger logger, LoggerService ano, Throwable ex) {
         context.closeContext(getValue(ex));
-        logger.error("{}", Configuration.msgFailed(context));
+        logger.error("{}", config.msgFailed(context));
         boolean stacktrace = ano.stacktrace();
         if (stacktrace) {
             logger.error("Stacktrace ", ex);
@@ -216,7 +218,11 @@ public class LoggerServiceInterceptor {
      * @return the corresponding log value.
      */
     private String getValue(Object value, Parameter parameter) {
-        if (parameter.isAnnotationPresent(LoggerExclude.class)) {
+        LoggerExclude pa = parameter.getAnnotation(LoggerExclude.class);
+        if (pa != null) {
+            if (!pa.mask().isEmpty()) {
+                return pa.mask();
+            }
             return parameter.getName();
         }
         return getValue(value);
