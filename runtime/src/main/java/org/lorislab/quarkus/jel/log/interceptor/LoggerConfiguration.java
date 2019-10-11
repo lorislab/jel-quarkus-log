@@ -115,7 +115,7 @@ class LoggerConfiguration {
      * @param parameters the log entry parameters.
      * @return the log parameter.
      */
-    private static Object msg(MessageFormat mf, Object[] parameters) {
+    public static Object msg(MessageFormat mf, Object[] parameters) {
         return new Object() {
             @Override
             public String toString() {

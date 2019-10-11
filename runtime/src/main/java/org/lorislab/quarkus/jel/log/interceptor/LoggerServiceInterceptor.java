@@ -124,7 +124,7 @@ public class LoggerServiceInterceptor {
         logger.error("{}", LoggerConfiguration.msgFailed(context));
         boolean stacktrace = ano.stacktrace();
         if (stacktrace) {
-            logger.error("Stacktrace ", ex);
+            logger.error("Error ", ex);
         }
     }
 
