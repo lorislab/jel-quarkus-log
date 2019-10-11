@@ -16,9 +16,6 @@
 
 package org.lorislab.quarkus.jel.log.interceptor;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -33,15 +30,25 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
+/**
+ * Logger builder service.
+ */
 @Singleton
 public class LoggerBuilderService {
 
-    private static final Logger log = LoggerFactory.getLogger(LoggerBuilderService.class);
-
+    /**
+     * The map of classes.
+     */
     private static final Map<Class, Function<Object, String>> CLASSES = new ConcurrentHashMap<>();
 
+    /**
+     * The map of assignable classes.
+     */
     private static final Map<Class<?>, Function<Object, String>> ASSIGNABLE_FROM = new HashMap<>();
 
+    /**
+     * Static init.
+     */
     static {
         CLASSES.put(Class[].class, LoggerBuilderService::array);
         CLASSES.put(int[].class, LoggerBuilderService::array);
@@ -81,9 +88,15 @@ public class LoggerBuilderService {
         ASSIGNABLE_FROM.put(Response.class, LoggerBuilderService::response);
     }
 
+    /**
+     * The generated logger builder.
+     */
     @Inject
     LoggerBuilder loggerBuilder;
 
+    /**
+     * Init method.
+     */
     @PostConstruct
     public void init() {
         CLASSES.putAll(loggerBuilder.getClasses());
@@ -115,32 +128,74 @@ public class LoggerBuilderService {
         return "" + parameter;
     }
 
+    /**
+     * Mapping method for the basic.
+     *
+     * @param parameter to map.
+     * @return the corresponding string result for the log.
+     */
     public static String basic(Object parameter) {
         return "" + parameter;
     }
 
+    /**
+     * Mapping method for the array.
+     *
+     * @param parameter to map.
+     * @return the corresponding string result for the log.
+     */
     public static String array(Object parameter) {
         return parameter.getClass().getSimpleName() + "[" + Array.getLength(parameter) + "]";
     }
 
+    /**
+     * Mapping method for the enumeration.
+     *
+     * @param parameter to map.
+     * @return the corresponding string result for the log.
+     */
     public static String enumeration(Object parameter) {
         return parameter.getClass().getSimpleName() + ":" + parameter.toString();
     }
 
+    /**
+     * Mapping method for the input-stream.
+     *
+     * @param parameter to map.
+     * @return the corresponding string result for the log.
+     */
     public static String inputStream(Object parameter) {
         return parameter.getClass().getSimpleName();
     }
 
+    /**
+     * Mapping method for the output-stream.
+     *
+     * @param parameter to map.
+     * @return the corresponding string result for the log.
+     */
     public static String outputStream(Object parameter) {
         return parameter.getClass().getSimpleName();
     }
 
+    /**
+     * Mapping method for the response.
+     *
+     * @param parameter to map.
+     * @return the corresponding string result for the log.
+     */
     public static String response(Object parameter) {
         Response response = (Response) parameter;
         Response.StatusType status = response.getStatusInfo();
         return "[" + status.getStatusCode() + "-" + status.getReasonPhrase() + "," + response.hasEntity() + "]";
     }
 
+    /**
+     * Mapping method for the map.
+     *
+     * @param parameter to map.
+     * @return the corresponding string result for the log.
+     */
     public static String map(Object parameter) {
         StringBuilder sb = new StringBuilder();
 
@@ -183,6 +238,12 @@ public class LoggerBuilderService {
         return sb.toString();
     }
 
+    /**
+     * Mapping method for the collection.
+     *
+     * @param parameter to map.
+     * @return the corresponding string result for the log.
+     */
     public static String collection(Object parameter) {
         Collection<?> tmp = (Collection<?>) parameter;
         String name = tmp.getClass().getSimpleName();

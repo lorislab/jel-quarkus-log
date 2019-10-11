@@ -92,7 +92,7 @@ public class LogBuild {
             if (!mapClasses.isEmpty() || !mapAssignableFrom.isEmpty()) {
                 log.debug("MapClasses: {}", mapClasses);
                 log.debug("MapAssignableFrom: {}", mapAssignableFrom);
-                transformers.produce(new BytecodeTransformerBuildItem(LoggerBuilder.getClassImpl(), new LogBuilderEnhancer(mapClasses, mapAssignableFrom)));
+                transformers.produce(new BytecodeTransformerBuildItem(LoggerBuilder.IMPL, new LogBuilderEnhancer(mapClasses, mapAssignableFrom)));
             }
         }
     }

@@ -21,7 +21,10 @@ import io.quarkus.runtime.annotations.ConfigRoot;
 
 import java.util.List;
 
-@ConfigRoot(name = "lorislab.jel")
+/**
+ * Build configuration.
+ */
+@ConfigRoot(name = "lorislab.jel.log")
 public class BuildConfig {
 
     /**

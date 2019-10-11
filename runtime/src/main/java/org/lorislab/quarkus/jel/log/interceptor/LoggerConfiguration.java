@@ -15,10 +15,9 @@
  */
 package org.lorislab.quarkus.jel.log.interceptor;
 
-import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.config.Config;
+import org.eclipse.microprofile.config.ConfigProvider;
 
-import javax.annotation.PostConstruct;
-import javax.enterprise.context.ApplicationScoped;
 import java.text.MessageFormat;
 
 /**
@@ -26,60 +25,96 @@ import java.text.MessageFormat;
  *
  * @author Andrej Petras
  */
-@ApplicationScoped
-@LoggerService(log = false)
-public class LoggerConfiguration {
+class LoggerConfiguration {
 
-    @ConfigProperty(name = "org.lorislab.jel.logger.nouser", defaultValue = "anonymous")
-    String noUser;
+    /**
+     * The result void text.
+     */
+    static final String RESULT_VOID;
 
-    @ConfigProperty(name = "org.lorislab.jel.logger.result.void", defaultValue = "void")
-    String resultVoid;
+    /**
+     * The message start.
+     */
+    private static MessageFormat messageStart;
 
-    @ConfigProperty(name = "org.lorislab.jel.logger.start", defaultValue = "{0}({1}) started.")
-    String patternStart;
+    /**
+     * The message succeed.
+     */
+    private static MessageFormat messageSucceed;
 
-    @ConfigProperty(name = "org.lorislab.jel.logger.succeed", defaultValue = "{0}({1}):{2} [{3}s] succeed.")
-    String patternSucceed;
+    /**
+     * The message future start.
+     */
+    private static MessageFormat messageFutureStart;
 
-    @ConfigProperty(name = "org.lorislab.jel.logger.failed", defaultValue = "{0}({1}):{2} [{3}s] failed.")
-    String patternFailed;
+    /**
+     * The message failed.
+     */
+    private static MessageFormat messageFailed;
 
-    @ConfigProperty(name = "org.lorislab.jel.logger.futureStart", defaultValue = "{0}({1}) future started.")
-    String patternFutureStart;
-
-    private MessageFormat messageStart;
-
-    private MessageFormat messageSucceed;
-
-    private MessageFormat messageFutureStart;
-
-    private MessageFormat messageFailed;
-
-    @PostConstruct
-    public void init() {
-        messageStart = new MessageFormat(patternStart);
-        messageSucceed = new MessageFormat(patternSucceed);
-        messageFailed = new MessageFormat(patternFailed);
-        messageFutureStart = new MessageFormat(patternFutureStart);
+    static {
+        Config config = ConfigProvider.getConfig();
+        RESULT_VOID = config.getOptionalValue("org.lorislab.jel.logger.result.void", String.class).orElse("void");
+        messageStart = new MessageFormat(config.getOptionalValue("org.lorislab.jel.logger.start", String.class).orElse("{0}({1}) started."));
+        messageSucceed = new MessageFormat(config.getOptionalValue("org.lorislab.jel.logger.succeed", String.class).orElse("{0}({1}):{2} [{3}s] succeed."));
+        messageFailed = new MessageFormat(config.getOptionalValue("org.lorislab.jel.logger.failed", String.class).orElse("{0}({1}):{2} [{3}s] failed."));
+        messageFutureStart = new MessageFormat(config.getOptionalValue("org.lorislab.jel.logger.futureStart", String.class).orElse("{0}({1}) future started."));
     }
 
-    public Object msgFailed(InterceptorContext context) {
-        return msg(messageFailed, new Object[]{context.getMethod(), context.getParameters(), context.getResult(), context.getTime()});
+    /**
+     * The default constructor.
+     */
+    private LoggerConfiguration() {
+        // empty constructor
     }
 
-    public Object msgSucceed(InterceptorContext context) {
-        return msg(messageSucceed, new Object[]{context.getMethod(), context.getParameters(), context.getResult(), context.getTime()});
+    /**
+     * The message failed method.
+     *
+     * @param context the interceptor context.
+     * @return the log message.
+     */
+    static Object msgFailed(InterceptorContext context) {
+        return msg(messageFailed, new Object[]{context.method, context.parameters, context.result, context.time});
     }
 
-    public Object msgFutureStart(InterceptorContext context) {
-        return msg(messageFutureStart, new Object[]{context.getMethod(), context.getParameters(), context.getResult(), context.getTime()});
+    /**
+     * The message succeed method.
+     *
+     * @param context the interceptor context.
+     * @return the log message.
+     */
+    static Object msgSucceed(InterceptorContext context) {
+        return msg(messageSucceed, new Object[]{context.method, context.parameters, context.result, context.time});
     }
 
-    public Object msgStart(InterceptorContext context) {
-        return msg(messageStart, new Object[]{context.getMethod(), context.getParameters()});
+    /**
+     * The message future start method.
+     *
+     * @param context the interceptor context.
+     * @return the log message.
+     */
+    static Object msgFutureStart(InterceptorContext context) {
+        return msg(messageFutureStart, new Object[]{context.method, context.parameters, context.result, context.time});
     }
 
+    /**
+     * The message start method.
+     *
+     * @param context the interceptor context.
+     * @return the log message.
+     */
+    static Object msgStart(InterceptorContext context) {
+        return msg(messageStart, new Object[]{context.method, context.parameters});
+    }
+
+    /**
+     * Log message method.
+     *
+     * @param mf         the message formatter.
+     * @param parameters the log entry parameters.
+     * @return the log parameter.
+     */
     private static Object msg(MessageFormat mf, Object[] parameters) {
         return new Object() {
             @Override

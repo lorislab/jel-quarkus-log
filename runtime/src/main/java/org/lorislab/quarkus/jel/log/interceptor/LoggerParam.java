@@ -25,16 +25,32 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Logger parameter function.
+ * This annotation is for the logger mapping method.
+ * The method needs to be public and static. The input parameter muss be object type and result string.
  */
 @Target({METHOD})
 @Retention(RUNTIME)
 @Documented
 public @interface LoggerParam {
 
+    /**
+     * The list of classes for which is this mapping method.
+     *
+     * @return the list of classes for which is this mapping method.
+     */
     @Nonbinding Class[] classes() default {};
 
+    /**
+     * The list of  assignable classes for which is this mapping method.
+     *
+     * @return the list of  assignable classes for which is this mapping method.
+     */
     @Nonbinding Class[] assignableFrom() default {};
 
+    /**
+     * The priority of this method.
+     *
+     * @return the priority of this method.
+     */
     @Nonbinding int priority() default 0;
 }

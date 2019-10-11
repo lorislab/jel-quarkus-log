@@ -22,71 +22,50 @@ package org.lorislab.quarkus.jel.log.interceptor;
  */
 public class InterceptorContext {
 
-    private static final String TIME_FORMAT = "%.3f";
+    /**
+     * The start time.
+     */
+    private final long startTime;
 
     /**
      * The service method.
      */
-    private final String method;
+    public final String method;
 
     /**
      * The list of method parameters.
      */
-    private final String parameters;
+    public final String parameters;
 
     /**
      * The result value.
      */
-    private String result;
+    public String result;
 
     /**
      * The execution time.
      */
-    private String time;
+    public String time;
+
 
     /**
-     * The start time.
+     * The default constructor.
+     * @param method the method.
+     * @param parameters the method parameters.
      */
-    private final long startTime = System.currentTimeMillis();
-
-    /**
-     * The class name.
-     */
-    private final String className;
-
-    public InterceptorContext(String method, String parameters, String className) {
+    public InterceptorContext(String method, String parameters) {
+        this.startTime = System.currentTimeMillis();
         this.method = method;
         this.parameters = parameters;
-        this.className = className;
     }
 
+    /**
+     * Close the context.
+     * @param result the result.
+     */
     public void closeContext(String result) {
-        time = String.format(TIME_FORMAT, (System.currentTimeMillis() - startTime) / 1000f);
+        time = String.format("%.3f", (System.currentTimeMillis() - startTime) / 1000f);
         this.result = result;
     }
 
-    public void closeContext() {
-        closeContext("");
-    }
-
-    public String getClassName() {
-        return className;
-    }
-
-
-    public String getMethod() {
-        return method;
-    }
-
-    public String getParameters() {
-        return parameters;
-    }
-
-    public String getResult() {
-        return result;
-    }
-
-    public String getTime() {
-        return time;
-    }
 }

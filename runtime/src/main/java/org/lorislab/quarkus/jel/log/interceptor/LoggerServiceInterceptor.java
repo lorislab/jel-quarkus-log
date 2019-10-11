@@ -41,58 +41,62 @@ import java.util.concurrent.CompletionStage;
 @Interceptor
 public class LoggerServiceInterceptor {
 
-    private static final Logger log = LoggerFactory.getLogger(LoggerServiceInterceptor.class);
-
+    /**
+     * The logger builder service.
+     */
     @Inject
     LoggerBuilderService loggerBuilderService;
 
-    @Inject
-    LoggerConfiguration config;
-
+    /**
+     * The method execution.
+     *
+     * @param ic the invocation context.
+     * @return the method result object.
+     * @throws Exception if the method fails.
+     */
     @AroundInvoke
     public Object methodExecution(final InvocationContext ic) throws Exception {
         Object result;
-        Class clazz = ic.getTarget().getClass();
         Method method = ic.getMethod();
+        String className = getObjectClassName(ic.getTarget());
 
-        LoggerService ano = getLoggerServiceAno(clazz, method);
+        LoggerService ano = getLoggerServiceAno(ic.getTarget().getClass(), className, method);
         if (ano.log()) {
-            String className = getObjectClassName(ic.getTarget());
 
             Logger logger = LoggerFactory.getLogger(className);
             String parameters = getValuesString(ic.getParameters(), method.getParameters());
 
-            InterceptorContext context = new InterceptorContext(method.getName(), parameters, className);
-            logger.info("{}", config.msgStart(context));
+            InterceptorContext context = new InterceptorContext(method.getName(), parameters);
+            logger.info("{}", LoggerConfiguration.msgStart(context));
 
             try {
                 result = ic.proceed();
 
                 if (result instanceof CompletionStage) {
-                    logger.info("{}", config.msgFutureStart(context));
+                    logger.info("{}", LoggerConfiguration.msgFutureStart(context));
 
                     CompletionStage cs = (CompletionStage) result;
                     cs.toCompletableFuture().whenComplete((u, eex) -> {
                         if (eex != null) {
                             handleException(context, logger, ano, (Throwable) eex);
                         } else {
-                            String contextResult = config.resultVoid;
+                            String contextResult = LoggerConfiguration.RESULT_VOID;
                             if (u != Void.TYPE) {
                                 contextResult = getValue(u);
                             }
                             context.closeContext(contextResult);
                             // log the success message
-                            logger.info("{}", config.msgSucceed(context));
+                            logger.info("{}", LoggerConfiguration.msgSucceed(context));
                         }
                     });
                 } else {
-                    String contextResult = config.resultVoid;
+                    String contextResult = LoggerConfiguration.RESULT_VOID;
                     if (method.getReturnType() != Void.TYPE) {
                         contextResult = getValue(result);
                     }
                     context.closeContext(contextResult);
                     // log the success message
-                    logger.info("{}", config.msgSucceed(context));
+                    logger.info("{}", LoggerConfiguration.msgSucceed(context));
                 }
             } catch (InvocationTargetException ie) {
                 handleException(context, logger, ano, ie.getCause());
@@ -107,9 +111,17 @@ public class LoggerServiceInterceptor {
         return result;
     }
 
+    /**
+     * Handles the exception.
+     *
+     * @param context the interceptor context.
+     * @param logger  the logger.
+     * @param ano     the annotation.
+     * @param ex      the exception.
+     */
     private void handleException(InterceptorContext context, Logger logger, LoggerService ano, Throwable ex) {
         context.closeContext(getValue(ex));
-        logger.error("{}", config.msgFailed(context));
+        logger.error("{}", LoggerConfiguration.msgFailed(context));
         boolean stacktrace = ano.stacktrace();
         if (stacktrace) {
             logger.error("Stacktrace ", ex);
@@ -148,11 +160,18 @@ public class LoggerServiceInterceptor {
         return null;
     }
 
-    public static LoggerService getLoggerServiceAno(Class<?> clazz, Method method) {
+    /**
+     * Gets the logger service annotation.
+     *
+     * @param clazz  the class.
+     * @param method the method.
+     * @return the logger service annotation.
+     */
+    public static LoggerService getLoggerServiceAno(Class<?> clazz, String className, Method method) {
 
         Config config = ConfigProvider.getConfig();
-        String mc = clazz.getName() + "." + method.getName() + "/jel-log/";
-        String c = clazz.getName() + "/jel-log/";
+        String mc = className + "." + method.getName() + "/jel-log/";
+        String c = className + "/jel-log/";
 
         Optional<Boolean> log = config.getOptionalValue(mc + "log", Boolean.class);
         Optional<Boolean> trace = config.getOptionalValue(mc + "trace", Boolean.class);
@@ -169,6 +188,13 @@ public class LoggerServiceInterceptor {
         return createLoggerService(log.orElse(clog.orElse(true)), trace.orElse(ctrace.orElse(true)));
     }
 
+    /**
+     * Creates the logger service.
+     *
+     * @param log        the log flag.
+     * @param stacktrace the stacktrace flag.
+     * @return the corresponding logger service.
+     */
     private static LoggerService createLoggerService(boolean log, boolean stacktrace) {
         return new LoggerService() {
             @Override

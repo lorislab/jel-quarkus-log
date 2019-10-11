@@ -20,18 +20,30 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+/**
+ * The logger builder interface.
+ */
 public interface LoggerBuilder {
 
-    String SUFFIX = "Impl";
+    /**
+     * The implementation class.
+     */
+    String IMPL = LoggerBuilder.class.getName() + "Impl";
 
-    static String getClassImpl() {
-        return LoggerBuilder.class.getName() + SUFFIX;
-    }
-
+    /**
+     * Gets the map of the mapping function for the class.
+     *
+     * @return the map of the mapping function for the class.
+     */
     default Map<Class, Function<Object, String>> getClasses() {
         return new HashMap<>();
     }
 
+    /**
+     * Gets the map of the mapping function for the assignable class.
+     *
+     * @return the map of the mapping function for the assignable class.
+     */
     default Map<Class<?>, Function<Object, String>> getAssignableFrom() {
         return new HashMap<>();
     }

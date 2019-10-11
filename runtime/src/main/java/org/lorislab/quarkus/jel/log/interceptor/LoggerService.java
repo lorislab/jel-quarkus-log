@@ -15,12 +15,12 @@
  */
 package org.lorislab.quarkus.jel.log.interceptor;
 
-import java.lang.annotation.*;
-
 import javax.enterprise.util.Nonbinding;
 import javax.interceptor.InterceptorBinding;
+import java.lang.annotation.*;
 
 /**
+ * The logger service annotation.
  *
  * @author Andrej Petras
  */
@@ -30,8 +30,18 @@ import javax.interceptor.InterceptorBinding;
 @Target({ElementType.METHOD, ElementType.TYPE})
 public @interface LoggerService {
 
+    /**
+     * Log the method or class if the flag is {@code true}.
+     *
+     * @return the log flag.
+     */
     @Nonbinding boolean log() default true;
-    
+
+    /**
+     * Log the exception stacktrace if the flag is {@code true}
+     *
+     * @return the stacktrace flag.
+     */
     @Nonbinding boolean stacktrace() default true;
 
 }
