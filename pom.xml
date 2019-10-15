@@ -46,7 +46,7 @@
     </modules>
 
     <properties>
-        <quarkus.version>0.23.2</quarkus.version>
+        <quarkus.version>0.24.0</quarkus.version>
         <testcontainers.version>1.11.4</testcontainers.version>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>        
@@ -92,7 +92,7 @@
                 <plugin>
                     <groupId>org.lorislab.maven</groupId>
                     <artifactId>semver-release-maven-plugin</artifactId>
-                    <version>0.3.0</version>
+                    <version>0.4.0</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
