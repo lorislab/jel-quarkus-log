@@ -20,15 +20,12 @@ import io.quarkus.arc.deployment.AnnotationsTransformerBuildItem;
 import io.quarkus.arc.processor.AnnotationsTransformer;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
-import io.quarkus.deployment.annotations.Record;
 import io.quarkus.deployment.builditem.BytecodeTransformerBuildItem;
 import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
+import io.quarkus.deployment.builditem.nativeimage.RuntimeInitializedClassBuildItem;
 import org.jboss.jandex.*;
-import org.lorislab.quarkus.jel.log.interceptor.LoggerBuilder;
-import org.lorislab.quarkus.jel.log.interceptor.LoggerBuilderService;
-import org.lorislab.quarkus.jel.log.interceptor.LoggerParam;
-import org.lorislab.quarkus.jel.log.interceptor.LoggerService;
+import org.lorislab.quarkus.jel.log.interceptor.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +35,7 @@ import javax.inject.Singleton;
 import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class LogBuild {
 
@@ -49,16 +47,9 @@ public class LogBuild {
 
     private static final String LOG_BUILDER_SERVICE = LoggerBuilderService.class.getName();
 
-    private static final List<String> ANNOTATIONS = Arrays.asList(
-            ApplicationScoped.class.getName(),
-            Singleton.class.getName(),
-            RequestScoped.class.getName()
-    );
-
     private static final List<DotName> ANNOTATION_DOT_NAMES =
-            ANNOTATIONS.stream()
-                    .map(DotName::createSimple)
-                    .collect(Collectors.toList());
+            Stream.of(ApplicationScoped.class, Singleton.class, RequestScoped.class)
+            .map(Class::getName).map(DotName::createSimple).collect(Collectors.toList());
 
     static final String FEATURE_NAME = "jel-log";
 
@@ -68,13 +59,17 @@ public class LogBuild {
     }
 
     @BuildStep
+    void initialized(BuildProducer<RuntimeInitializedClassBuildItem> runtimeInitialized) {
+        runtimeInitialized.produce(new RuntimeInitializedClassBuildItem(RestClientLogInterceptor.class.getCanonicalName()));
+    }
+
+    @BuildStep
     void loggerParameter(CombinedIndexBuildItem indexBuildItem, BuildProducer<BytecodeTransformerBuildItem> transformers) {
 
         Collection<AnnotationInstance> annotations = indexBuildItem.getIndex().getAnnotations(LOG_PARAM);
         if (annotations != null && !annotations.isEmpty()) {
 
             Map<DotName, LoggerParamInfo> mapClasses = new HashMap<>();
-
             Map<DotName, LoggerParamInfo> mapAssignableFrom = new HashMap<>();
 
             for (AnnotationInstance annotation : annotations) {
@@ -99,20 +94,18 @@ public class LogBuild {
 
     private void addToMap(Map<DotName, LoggerParamInfo> map, AnnotationInstance annotation, String valueName, MethodInfo methodInfo, int priority) {
         List<DotName> classes = getClassArrayValue(annotation, valueName);
-        if (classes != null) {
-            for (DotName name : classes) {
-                LoggerParamInfo info = map.get(name);
-                if (info == null) {
-                    info = new LoggerParamInfo();
-                    info.name = name;
+        for (DotName name : classes) {
+            LoggerParamInfo info = map.get(name);
+            if (info == null) {
+                info = new LoggerParamInfo();
+                info.name = name;
+                info.priority = priority;
+                info.methodInfo = methodInfo;
+                map.put(name, info);
+            } else {
+                if (info.priority < priority) {
                     info.priority = priority;
                     info.methodInfo = methodInfo;
-                    map.put(name, info);
-                } else {
-                    if (info.priority < priority) {
-                        info.priority = priority;
-                        info.methodInfo = methodInfo;
-                    }
                 }
             }
         }
@@ -122,7 +115,7 @@ public class LogBuild {
     private List<DotName> getClassArrayValue(AnnotationInstance annotation, String name) {
         AnnotationValue value = annotation.value(name);
         if (value == null) {
-            return null;
+            return Collections.emptyList();
         }
         Type[] classes = value.asClassArray();
         if (classes.length > 0) {
@@ -132,7 +125,7 @@ public class LogBuild {
             }
             return result;
         }
-        return null;
+        return Collections.emptyList();
     }
 
     @BuildStep

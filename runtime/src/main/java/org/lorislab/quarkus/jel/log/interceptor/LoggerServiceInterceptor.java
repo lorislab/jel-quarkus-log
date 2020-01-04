@@ -20,6 +20,7 @@ import org.eclipse.microprofile.config.ConfigProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.interceptor.AroundInvoke;
 import javax.interceptor.Interceptor;
@@ -39,6 +40,7 @@ import java.util.concurrent.CompletionStage;
  */
 @LoggerService
 @Interceptor
+@Priority(Interceptor.Priority.PLATFORM_BEFORE)
 public class LoggerServiceInterceptor {
 
     /**
@@ -75,7 +77,7 @@ public class LoggerServiceInterceptor {
                 if (result instanceof CompletionStage) {
                     logger.info("{}", LoggerConfiguration.msgFutureStart(context));
 
-                    CompletionStage cs = (CompletionStage) result;
+                    CompletionStage<?> cs = (CompletionStage<?>) result;
                     cs.toCompletableFuture().whenComplete((u, eex) -> {
                         if (eex != null) {
                             handleException(context, logger, ano, (Throwable) eex);
@@ -136,9 +138,9 @@ public class LoggerServiceInterceptor {
      */
     private static String getObjectClassName(Object object) {
         if (object instanceof Proxy) {
-            Class<?>[] interf = object.getClass().getInterfaces();
-            if (interf.length > 0) {
-                return getClassName(interf[0]);
+            Class<?>[] clazz = object.getClass().getInterfaces();
+            if (clazz.length > 0) {
+                return getClassName(clazz[0]);
             }
         }
         return getClassName(object.getClass());

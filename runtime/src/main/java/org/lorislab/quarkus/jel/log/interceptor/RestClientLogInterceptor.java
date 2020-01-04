@@ -12,7 +12,6 @@ import javax.ws.rs.client.ClientRequestFilter;
 import javax.ws.rs.client.ClientResponseContext;
 import javax.ws.rs.client.ClientResponseFilter;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.Provider;
 import java.text.MessageFormat;
 
 /**
@@ -20,7 +19,6 @@ import java.text.MessageFormat;
  *
  * @author Andrej Petras
  */
-@Provider
 @LoggerService(log = false)
 public class RestClientLogInterceptor implements ClientRequestFilter, ClientResponseFilter {
 
