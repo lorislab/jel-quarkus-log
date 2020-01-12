@@ -23,7 +23,6 @@ import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.builditem.BytecodeTransformerBuildItem;
 import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
-import io.quarkus.deployment.builditem.nativeimage.RuntimeInitializedClassBuildItem;
 import org.jboss.jandex.*;
 import org.lorislab.quarkus.jel.log.interceptor.*;
 import org.slf4j.Logger;
@@ -56,11 +55,6 @@ public class LogBuild {
     @BuildStep
     FeatureBuildItem createFeatureItem() {
         return new FeatureBuildItem(FEATURE_NAME);
-    }
-
-    @BuildStep
-    void initialized(BuildProducer<RuntimeInitializedClassBuildItem> runtimeInitialized) {
-        runtimeInitialized.produce(new RuntimeInitializedClassBuildItem(RestClientLogInterceptor.class.getCanonicalName()));
     }
 
     @BuildStep
