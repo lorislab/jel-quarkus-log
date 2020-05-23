@@ -1,5 +1,7 @@
 # jel-quarkus-log
 
+THIS PROJECT IS DEPRECATED! New version: https://github.com/lorislab/quarkus-log
+
 JEL log for the quarkus framework
 
 [![License](https://img.shields.io/github/license/lorislab/jel-quarkus-log?style=for-the-badge&logo=apache)](https://www.apache.org/licenses/LICENSE-2.0)
